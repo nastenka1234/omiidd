@@ -88,9 +88,14 @@ jobs:
           flutter pub get
           python3 ../tool/fix_plugins.py .
           printf '\norg.gradle.parallel=true\norg.gradle.caching=true\nkotlin.incremental=false\n' >> android/gradle.properties
-      - name: Analyze (informational, optional)
-        if: ${{ false }}
-        run: cd shell && (flutter analyze --no-fatal-infos --no-fatal-warnings || true)
+      - name: Analyze (fail fast, all Dart errors listed at once)
+        run: |
+          cd shell
+          RC=0
+          flutter analyze --no-fatal-infos --no-fatal-warnings > /tmp/analyze.txt 2>&1 || RC=$?
+          echo "=== Dart errors ==="
+          grep -E "^\s*error •" /tmp/analyze.txt || echo "none"
+          exit $RC
       - name: Generate icon and splash
         run: |
           cd shell
